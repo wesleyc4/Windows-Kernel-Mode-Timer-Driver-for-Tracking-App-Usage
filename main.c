@@ -37,12 +37,11 @@ VOID PcreateProcessNotifyRoutine( //process callback function
             PUNICODE_STRING appName = NULL;
             NTSTATUS appStatus = SeLocateProcessImageName(process, &appName); //get process path
             if (NT_SUCCESS(appStatus)) {
+
                 UNICODE_STRING targetAppName;
-                DbgPrint("Process NT path: %wZ\n", appName);
-                RtlInitUnicodeString(&targetAppName, L"Notepad.exe");
-                
-                //RtlInitUnicodeString(&targetAppName, L"\\Device\\HarddiskVolume3\\Microsoft\\Edge\\Application\\msedge.exe"); //set target 
-                //if (RtlCompareUnicodeString(appName, &targetAppName, TRUE) == 0) { //compare if opened app is the target app
+                DbgPrint("Process NT path: %wZ\n", appName); //print NT path for every process that is opened
+                RtlInitUnicodeString(&targetAppName, L"Notepad.exe"); //set target app name
+              
                 if (RtlSuffixUnicodeString(&targetAppName, appName, TRUE)) { //compare if opened app is the target app
 
                     app_pid = ProcessId;//save process id
@@ -60,7 +59,7 @@ VOID PcreateProcessNotifyRoutine( //process callback function
                 //free block when done using
                 ExFreePool(appName);
             }
-            //deference obj when done using
+            //free reference kernel obj
             ObDereferenceObject(process);
         }
         
@@ -136,8 +135,6 @@ DriverEntry(
 
     //driver configuration object
     WDF_DRIVER_CONFIG config;
-
-    //DriverObject->DriverUnload = DriverUnload;
 
     //initialize config
     WDF_DRIVER_CONFIG_INIT(&config,
@@ -222,13 +219,36 @@ DriverEntry(
 }
 
 
+//old stuff not used
+
 //VOID DriverUnload(PDRIVER_OBJECT DriverObject)
 //{
 //    UNREFERENCED_PARAMETER(DriverObject);
 //    PsSetCreateProcessNotifyRoutine(PcreateProcessNotifyRoutine, TRUE);
 //    DbgPrint("Process monitor driver unloaded\n");
 //}
+//DriverObject->DriverUnload = DriverUnload;
 
+//UCHAR* appName = PsGetProcessImageFileName(process);
+////case insensitive file suffix compare to determine matching name
+//if ((_stricmp((char*) appName, "msedge.exe") == 0) || (_stricmp((char*)appName, "Microsoft Edge.lnk") == 0)){
+//    app_pid = ProcessId;
+//    DbgPrint("Microsoft Edge has launched with PID %llu\n", (ULONGLONG)ProcessId);
+//}
+
+////release reference kernel obj
+//ObDereferenceObject(process);
+
+//ptr to string literal
+//RtlInitUnicodeString(&appName, L"msedge.exe");
+//RtlInitUnicodeString(&appShortcut, L"Microsoft Edge.lnk");
+
+//compare file suffix to determine matching name
+//if (RtlSuffixUnicodeString(&appName, CreateInfo->ImageFileName, TRUE) ||
+//    RtlSuffixUnicodeString(&appShortcut, CreateInfo->ImageFileName, TRUE)) {
+//    app_pid = ProcessId;
+//    DbgPrint("Microsoft Edge has launched with PID %llu\n", (ULONGLONG)ProcessId);
+//}
 
 //typedef struct _PS_CREATE_NOTIFY_INFO {
 //    SIZE_T              Size;
@@ -259,35 +279,4 @@ NTSTATUS WdfDriverCreate(
   [in]            PWDF_DRIVER_CONFIG     DriverConfig, //ptr to WDF_DRIVER_CONFIG
   [out, optional] WDFDRIVER              *Driver //ptr to location that receives handle to driver obj
 );
-
-
 */
-
-
-
-
-
-
-
-
-
-//UCHAR* appName = PsGetProcessImageFileName(process);
-////case insensitive file suffix compare to determine matching name
-//if ((_stricmp((char*) appName, "msedge.exe") == 0) || (_stricmp((char*)appName, "Microsoft Edge.lnk") == 0)){
-//    app_pid = ProcessId;
-//    DbgPrint("Microsoft Edge has launched with PID %llu\n", (ULONGLONG)ProcessId);
-//}
-
-////release reference kernel obj
-//ObDereferenceObject(process);
-
-//ptr to string literal
-//RtlInitUnicodeString(&appName, L"msedge.exe");
-//RtlInitUnicodeString(&appShortcut, L"Microsoft Edge.lnk");
-
-//compare file suffix to determine matching name
-//if (RtlSuffixUnicodeString(&appName, CreateInfo->ImageFileName, TRUE) ||
-//    RtlSuffixUnicodeString(&appShortcut, CreateInfo->ImageFileName, TRUE)) {
-//    app_pid = ProcessId;
-//    DbgPrint("Microsoft Edge has launched with PID %llu\n", (ULONGLONG)ProcessId);
-//}
